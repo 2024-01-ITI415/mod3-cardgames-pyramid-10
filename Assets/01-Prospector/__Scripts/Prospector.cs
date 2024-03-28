@@ -319,7 +319,7 @@ public class Prospector : MonoBehaviour
 			ScoreManager.EVENT(eScoreEvent.gameLoss);
 		}
 		// Reload the scene, resetting the game
-		SceneManager.LoadScene("__Prospector_Scene_0");
+		SceneManager.LoadScene("__Prospector");
 	}
 
 
