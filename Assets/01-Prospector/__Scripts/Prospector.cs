@@ -76,27 +76,37 @@ public class Prospector : MonoBehaviour
 
 		CardProspector cp;
       // Follow the layout
-      foreach (SlotDef tSD in Layout.slotDefs) 
-	  {
+      	foreach (SlotDef tSD in Layout.slotDefs) 
+	  	{
           // ^ Iterate through all the SlotDefs in the layout.slotDefs as tSD
-          cp = Draw(); // Pull a card from the top (beginning) of the draw Pile
-          cp.faceUp = tSD.faceUp;  // Set its faceUp to the value in SlotDef
-          cp.transform.parent = layoutAnchor; // Make its parent layoutAnchor
+          	cp = Draw(); // Pull a card from the top (beginning) of the draw Pile
+          	cp.faceUp = tSD.faceUp;  // Set its faceUp to the value in SlotDef
+          	cp.transform.parent = layoutAnchor; // Make its parent layoutAnchor
           // This replaces the previous parent: deck.deckAnchor, which
           //  appears as _Deck in the Hierarchy when the scene is playing.
-          cp.transform.localPosition = new Vector3(
-              Layout.multiplier.x * tSD.x,
-              Layout.multiplier.y * tSD.y,
-              -tSD.layerID );
+          	cp.transform.localPosition = new Vector3(
+              	Layout.multiplier.x * tSD.x,
+              	Layout.multiplier.y * tSD.y,
+              	-tSD.layerID );
           // ^ Set the localPosition of the card based on slotDef
-        cp.layoutID = tSD.id;
-        cp.slotDef = tSD;
+        	cp.layoutID = tSD.id;
+        	cp.slotDef = tSD;
           // CardProspectors in the tableau have the state CardState.tableau
-        cp.state = eCardState.tableau;
-		cp.SetSortingLayerName(tSD.layerName);
+        	cp.state = eCardState.tableau;
+			cp.SetSortingLayerName(tSD.layerName);
   
-          tableau.Add(cp); // Add this CardProspector to the List<> tableau    
-       }
+          	tableau.Add(cp); // Add this CardProspector to the List<> tableau
+		}
+
+		foreach (CardProspector tCP in tableau) 
+		{
+          	foreach( int hid in tCP.slotDef.hiddenBy ) 
+			{
+              	cp = FindCardByLayoutID(hid);
+              	tCP.hiddenBy.Add(cp);
+          	}
+      	}
+       	
 		
 		MoveToTarget(Draw ());
    
@@ -104,6 +114,39 @@ public class Prospector : MonoBehaviour
       	UpdateDrawPile();
 
 	}
+
+	CardProspector FindCardByLayoutID(int layoutID) 
+	{
+        foreach (CardProspector tCP in tableau) 
+		{
+            // Search through all cards in the tableau List<>
+            if (tCP.layoutID == layoutID) 
+			{
+               // If the card has the same ID, return it
+               return( tCP );
+        	}
+      	}
+      // If it's not found, return null
+      return( null );
+    }
+   
+    // This turns cards in the Mine face-up or face-down
+    void SetTableauFaces() 
+	{
+    	foreach( CardProspector cd in tableau ) 
+		{
+      		bool faceUp = true; // Assume the card will be face-up
+      		foreach( CardProspector cover in cd.hiddenBy ) 
+			{
+          		// If either of the covering cards are in the tableau
+          		if (cover.state == eCardState.tableau) 
+				{
+              	faceUp = false; // then this card is face-down
+          		}
+        	}
+        	cd.faceUp = faceUp; // Set the value on the card
+      	}
+    }
 
 	void MoveToDiscard(CardProspector cd) 
 	{
@@ -182,11 +225,94 @@ public class Prospector : MonoBehaviour
             	MoveToDiscard(target); // Moves the target to the discardPile
             	MoveToTarget(Draw());  // Moves the next drawn card to the target
             	UpdateDrawPile();     // Restacks the drawPile
+				ScoreManager.EVENT(eScoreEvent.draw);
             	break;
 
-        	case eCardState.tableau:
-            	// Clicking a card in the tableau will check if it's a valid play
-            	break;
+			case eCardState.tableau:
+             	// Clicking a card in the tableau will check if it's a valid play
+             	bool validMatch = true;
+
+             	if (!cd.faceUp) 
+				{
+                 	// If the card is face-down, it's not valid
+                	validMatch = false;
+             	}
+
+             	if (!AdjacentRank(cd, target)) 
+				{
+                 	// If it's not an adjacent rank, it's not valid
+                 	validMatch = false;
+             	}
+
+             	if (!validMatch) return; // return if not valid
+      
+             	// If we got here, then: Yay! It's a valid card.
+             	tableau.Remove(cd); // Remove it from the tableau List
+             	MoveToTarget(cd);  // Make it the target card
+				SetTableauFaces();  // Update tableau card face-ups
+				ScoreManager.EVENT(eScoreEvent.mine);
+             	break;
       	}
+
+		CheckForGameOver();
+    }
+
+	void CheckForGameOver() 
+	{
+       // If the tableau is empty, the game is over
+       if (tableau.Count==0) 
+	   	{
+           // Call GameOver() with a win
+           	GameOver(true);
+           	return;
+      	}
+
+		if (drawPile.Count>0) 
+		{
+          return;
+      	}
+
+		foreach ( CardProspector cd in tableau ) 
+		{
+        	if (AdjacentRank(cd, target)) 
+			{
+            // If there is a valid play, the game's not over
+            	return;
+        	}
+      	}
+
+		GameOver (false);
+    }
+
+	void GameOver(bool won) 
+	{
+        if (won == true) 
+		{
+            //print ("Game Over. You won! :D");
+			ScoreManager.EVENT(eScoreEvent.gameWin);
+        } else {
+            //print ("Game Over. You Lost. ;(");
+			ScoreManager.EVENT(eScoreEvent.gameLoss);
+        }
+        // Reload the scene, resetting the game
+        SceneManager.LoadScene("__Prospector");
+    }
+
+	public bool AdjacentRank(CardProspector c0, CardProspector c1) 
+	{
+        // If either card is face-down, it's not adjacent.
+        if (!c0.faceUp || !c1.faceUp) return(false);
+      
+        // If they are 1 apart, they are adjacent
+        if (Mathf.Abs(c0.rank - c1.rank) == 1) 
+		{
+            return(true);
+        }
+           // If one is Ace and the other King, they are adjacent
+        if (c0.rank == 1 && c1.rank == 13) return(true);
+        if (c0.rank == 13 && c1.rank == 1) return(true);
+      
+           // Otherwise, return false
+           return(false);
     }
 }
