@@ -54,7 +54,7 @@ TextureImporter:
       213: 21300032
     second: Letters_15
   externalObjects: {}
-  serializedVersion: 11
+  serializedVersion: 12
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -71,11 +71,12 @@ TextureImporter:
     externalNormalMap: 0
     heightScale: 0.25
     normalMapFilter: 0
+    flipGreenChannel: 0
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
-  ignoreMasterTextureLimit: 0
+  ignoreMipmapLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -114,6 +115,8 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 1
+  swizzle: 50462976
+  cookieLightType: 1
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -125,6 +128,7 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   - serializedVersion: 3
@@ -137,13 +141,40 @@ TextureImporter:
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 1
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Standalone
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 3
+    buildTarget: Server
+    maxTextureSize: 1024
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Letters_0
+      name: Rank_0
       rect:
         serializedVersion: 2
         x: 0
@@ -155,16 +186,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 22305410000000000800000000000000
-      internalID: 21300002
+      spriteID: 64c32eebad8229e40af105b82ed9dda1
+      internalID: -1367828618
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_1
+      name: Rank_1
       rect:
         serializedVersion: 2
         x: 32
@@ -176,16 +207,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 42305410000000000800000000000000
-      internalID: 21300004
+      spriteID: 1d98848a8875f304b9b3086f73b12293
+      internalID: -1818165451
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_2
+      name: Rank_2
       rect:
         serializedVersion: 2
         x: 64
@@ -197,16 +228,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 62305410000000000800000000000000
-      internalID: 21300006
+      spriteID: e90288b063b696145af24accb63999e6
+      internalID: -945041862
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_3
+      name: Rank_3
       rect:
         serializedVersion: 2
         x: 96
@@ -218,16 +249,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 82305410000000000800000000000000
-      internalID: 21300008
+      spriteID: d776892b649dcce4b86b6b7b169092de
+      internalID: 772381529
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_4
+      name: Rank_4
       rect:
         serializedVersion: 2
         x: 128
@@ -239,16 +270,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a2305410000000000800000000000000
-      internalID: 21300010
+      spriteID: 23f4146974ab16748989a91f7c9a6726
+      internalID: -1233771526
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_5
+      name: Rank_5
       rect:
         serializedVersion: 2
         x: 160
@@ -260,16 +291,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c2305410000000000800000000000000
-      internalID: 21300012
+      spriteID: 306a8191858110248a9cb081b83d07cc
+      internalID: 1464333332
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_6
+      name: Rank_6
       rect:
         serializedVersion: 2
         x: 192
@@ -281,16 +312,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e2305410000000000800000000000000
-      internalID: 21300014
+      spriteID: 5c94b58c955b6f047b66c6668298d01a
+      internalID: -1332868949
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_7
+      name: Rank_7
       rect:
         serializedVersion: 2
         x: 224
@@ -302,16 +333,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 03305410000000000800000000000000
-      internalID: 21300016
+      spriteID: 1e7b0fbaabc0c4444bd3a242341d9bc6
+      internalID: -402183664
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_8
+      name: Rank_8
       rect:
         serializedVersion: 2
         x: 256
@@ -323,16 +354,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 23305410000000000800000000000000
-      internalID: 21300018
+      spriteID: 87a40a19f3637c94193ac71ddcd541f0
+      internalID: 1674051119
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_9
+      name: Rank_9
       rect:
         serializedVersion: 2
         x: 288
@@ -344,16 +375,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 43305410000000000800000000000000
-      internalID: 21300020
+      spriteID: 7ca0044b9ef92d249b17e1949594032b
+      internalID: 1702174478
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_10
+      name: Rank_10
       rect:
         serializedVersion: 2
         x: 320
@@ -365,16 +396,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 63305410000000000800000000000000
-      internalID: 21300022
+      spriteID: c5accb34f3bf3c745985a0b86569b836
+      internalID: -468496468
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_11
+      name: Rank_11
       rect:
         serializedVersion: 2
         x: 352
@@ -386,16 +417,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 83305410000000000800000000000000
-      internalID: 21300024
+      spriteID: 447a43bbe58ae5744b5db0691c3ece11
+      internalID: -314674337
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_12
+      name: Rank_12
       rect:
         serializedVersion: 2
         x: 384
@@ -407,16 +438,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: a3305410000000000800000000000000
-      internalID: 21300026
+      spriteID: fa7a80cfb8bd0f742a22ace7fe8c2048
+      internalID: 1698945677
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_13
+      name: Rank_13
       rect:
         serializedVersion: 2
         x: 416
@@ -428,16 +459,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: c3305410000000000800000000000000
-      internalID: 21300028
+      spriteID: 550d3dee9b1a8ca4a90b849ba5829436
+      internalID: -960492304
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_14
+      name: Rank_14
       rect:
         serializedVersion: 2
         x: 448
@@ -449,16 +480,16 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: e3305410000000000800000000000000
-      internalID: 21300030
+      spriteID: 6461ef5dc73f68a4db61e1f995d33290
+      internalID: 1421425746
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Letters_15
+      name: Rank_15
       rect:
         serializedVersion: 2
         x: 480
@@ -470,10 +501,10 @@ TextureImporter:
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: 04305410000000000800000000000000
-      internalID: 21300032
+      spriteID: f88b2885bbb89d948a9a65ee0038ec57
+      internalID: -1545845008
       vertices: []
       indices: 
       edges: []
@@ -481,33 +512,32 @@ TextureImporter:
     outline: []
     physicsShape: []
     bones: []
-    spriteID: 
-    internalID: 0
+    spriteID: e66dbb142afebe2489ac8326176f59d9
+    internalID: -61449091
     vertices: []
     indices: 
     edges: []
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Letters_9: 21300020
-      Letters_5: 21300012
-      Letters_6: 21300014
-      Letters_0: 21300002
-      Letters_2: 21300006
-      Letters_10: 21300022
-      Letters_1: 21300004
-      Letters_4: 21300010
-      Letters_7: 21300016
-      Letters_13: 21300028
-      Letters_11: 21300024
-      Letters_3: 21300008
-      Letters_15: 21300032
-      Letters_8: 21300018
-      Letters_12: 21300026
-      Letters_14: 21300030
-  spritePackingTag: 
+      Rank_0: -1367828618
+      Rank_1: -1818165451
+      Rank_10: -468496468
+      Rank_11: -314674337
+      Rank_12: 1698945677
+      Rank_13: -960492304
+      Rank_14: 1421425746
+      Rank_15: -1545845008
+      Rank_2: -945041862
+      Rank_3: 772381529
+      Rank_4: -1233771526
+      Rank_5: 1464333332
+      Rank_6: -1332868949
+      Rank_7: -402183664
+      Rank_8: 1674051119
+      Rank_9: 1702174478
+  mipmapLimitGroupName: 
   pSDRemoveMatte: 0
-  pSDShowRemoveMatteOption: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
