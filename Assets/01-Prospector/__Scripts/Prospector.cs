@@ -1,111 +1,364 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;   // We’ll need this line later in the chapter
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
-[RequireComponent(typeof(Deck))]                                              // a
-[RequireComponent(typeof(JsonParseLayout))]
 public class Prospector : MonoBehaviour
 {
-    private static Prospector S; // A private Singleton for Prospector
+    public static Prospector S;
+    [Header("Set in Inspector")]
+    public TextAsset deckXML;
+    public TextAsset layoutXML;
+    public float xOffset = 3f;
+    public float yOffset = -2.5f;
+    public Vector3 layoutCenter;
+    public Vector2 fsPosMid = new Vector2(0.5f, 0.90f);
+    public Vector2 fsPosRun = new Vector2(0.5f, 0.75f);
+    public Vector2 fsPosMid2 = new Vector2(0.4f, 1.0f);
+    public Vector2 fsPosEnd = new Vector2(0.5f, 0.95f);
+    public float reloadDelay = 2f;
+    public Text gameOverText, roundResultText, highScoreText;
 
-    [Header("Dynamic")]
+    [Header("Set Dynamically")]
+    public Deck deck;
+    public Layout layout;
     public List<CardProspector> drawPile;
-    public List<CardProspector> discardPile;
-    public List<CardProspector> mine;
+    public Transform layoutAnchor;
     public CardProspector target;
+    public List<CardProspector> tableau;
+    public List<CardProspector> discardPile;
+    public FloatingScore fsRun;
 
-    private Transform layoutAnchor;
-    private Deck deck;
-    private JsonLayout jsonLayout;
+    void Awake()
+    {
+        S = this;
+        SetUpUITexts();
+    }
+
+    void SetUpUITexts()
+    {
+        GameObject go = GameObject.Find("HighScore");
+        if (go != null)
+        {
+            highScoreText = go.GetComponent<Text>();
+        }
+        int highScore = ScoreManager.HIGH_SCORE;
+        string hScore = "High Score: " + Utils.AddCommasToNumber(highScore);
+        go.GetComponent<Text>().text = hScore;
+
+        go = GameObject.Find("GameOver");
+        if (go != null)
+        {
+            gameOverText = go.GetComponent<Text>();
+        }
+
+        go = GameObject.Find("RoundResult");
+        if (go != null)
+        {
+            roundResultText = go.GetComponent<Text>();
+        }
+        ShowResultUI(false);
+    }
+
+    void ShowResultUI(bool show)
+    {
+        gameOverText.gameObject.SetActive(show);
+        roundResultText.gameObject.SetActive(show);
+    }
 
     void Start()
     {
-        // Set the private Singleton. We’ll use this later.
-        if (S != null) Debug.LogError("Attempted to set S more than once!");  // b
-        S = this;
-
-        jsonLayout = GetComponent<JsonParseLayout>().layout;
+        Scoreboard.S.score = ScoreManager.SCORE;
 
         deck = GetComponent<Deck>();
-        // These two lines replace the Start() call we commented out in Deck
-        deck.InitDeck();
+        deck.InitDeck(deckXML.text);
         Deck.Shuffle(ref deck.cards);
 
-        drawPile = ConvertCardsToCardProspectors(deck.cards);
+        layout = GetComponent<Layout>();
+        layout.ReadLayout(layoutXML.text);
 
-        LayoutMine();
+        drawPile = ConvertListCardsToListCardProspectors(deck.cards);
+        LayoutGame();
     }
 
-    /// <summary>
-    /// Converts each Card in a List(Card) into a List(CardProspector) so that it
-    ///  can be used in the Prospector game.
-    /// </summary>
-    /// <param name="listCard">A List(Card) to be converted</param>
-    /// <returns>A List(CardProspector) of the converted cards</returns>
-    List<CardProspector> ConvertCardsToCardProspectors(List<Card> listCard)
+    List<CardProspector> ConvertListCardsToListCardProspectors(List<Card> lCD)
     {
-        List<CardProspector> listCP = new List<CardProspector>();
-        CardProspector cp;
-        foreach (Card card in listCard)
+        List<CardProspector> lCP = new List<CardProspector>();
+        CardProspector tCP;
+        foreach (Card tCD in lCD)
         {
-            cp = card as CardProspector;                                      // c
-            listCP.Add(cp);
+            tCP = tCD as CardProspector;
+            lCP.Add(tCP);
         }
-        return (listCP);
+        return (lCP);
     }
 
-    /// <summary>
-    /// Pulls a single card from the beginning of the drawPile and returns it
-    /// Note: There is no protection against trying to draw from an empty pile!
-    /// </summary>
-    /// <returns>The top card of drawPile</returns>
     CardProspector Draw()
     {
-        CardProspector cp = drawPile[0]; // Pull the 0th CardProspector
-        drawPile.RemoveAt(0);            // Then remove it from drawPile
-        return (cp);                      // And return it
+        CardProspector cd = drawPile[0];
+        drawPile.RemoveAt(0);
+        return (cd);
     }
 
-    /// <summary>
-    /// Positions the initial tableau of cards, a.k.a. the "mine"
-    /// </summary>
-    void LayoutMine()
+    void LayoutGame()
     {
-        // Create an empty GameObject to serve as an anchor for the tableau   // a
         if (layoutAnchor == null)
         {
-            // Create an empty GameObject named _LayoutAnchor in the Hierarchy
             GameObject tGO = new GameObject("_LayoutAnchor");
-            layoutAnchor = tGO.transform;             // Grab its Transform
+            layoutAnchor = tGO.transform;
+            layoutAnchor.transform.position = layoutCenter;
         }
 
-        CardProspector cp;                                                    // b
-
-        // Iterate through the JsonLayoutSlots pulled from the JSON_Layout
-        foreach (JsonLayoutSlot slot in jsonLayout.slots)
+        CardProspector cp;
+        foreach (SlotDef tSD in layout.slotDefs)
         {
-            cp = Draw(); // Pull a card from the top (beginning) of the draw Pile
-            cp.faceUp = slot.faceUp;    // Set its faceUp to the value in SlotDef
-                                        // Make the CardProspector a child of layoutAnchor
-            cp.transform.SetParent(layoutAnchor);
+            cp = Draw();
+            cp.faceUp = tSD.faceUp;
+            cp.transform.parent = layoutAnchor;
+            cp.transform.localPosition = new Vector3(
+                layout.multiplier.x * tSD.x,
+                layout.multiplier.y * tSD.y,
+                -tSD.layerID);
+            cp.layoutID = tSD.id;
+            cp.slotDef = tSD;
+            cp.state = eCardState.tableau;
+            cp.SetSortingLayerName(tSD.layerName);
+            tableau.Add(cp);
+        }
 
-            // Convert the last char of the layer string to an int (e.g. "Row 0")
-            int z = int.Parse(slot.layer[slot.layer.Length - 1].ToString());  // c
+        foreach (CardProspector tCP in tableau)
+        {
+            foreach (int hid in tCP.slotDef.hiddenBy)
+            {
+                cp = FindCardByLayoutID(hid);
+                tCP.hiddenBy.Add(cp);
+            }
+        }
 
-            // Set the localPosition of the card based on the slot information
-            cp.SetLocalPos(new Vector3(
-                jsonLayout.multiplier.x * slot.x,
-                jsonLayout.multiplier.y * slot.y,
-                -z));                                                       // d
+        MoveToTarget(Draw());
+        UpdateDrawPile();
+    }
 
-            cp.layoutID = slot.id;
-            cp.layoutSlot = slot;
-            // CardProspectors in the mine have the state CardState.mine
-            cp.state = eCardState.mine;
+    CardProspector FindCardByLayoutID(int layoutID)
+    {
+        foreach (CardProspector tCP in tableau)
+        {
+            if (tCP.layoutID == layoutID)
+            {
+                return (tCP);
+            }
+        }
+        return (null);
+    }
 
-            mine.Add(cp); // Add this CardProspector to the List<> mine
+    void SetTableauFaces()
+    {
+        foreach (CardProspector cd in tableau)
+        {
+            bool faceUp = true;
+            foreach (CardProspector cover in cd.hiddenBy)
+            {
+                if (cover.state == eCardState.tableau)
+                {
+                    faceUp = false;
+                }
+            }
+            cd.faceUp = faceUp;
         }
     }
 
+    void MoveToDiscard(CardProspector cd)
+    {
+        cd.state = eCardState.discard;
+        discardPile.Add(cd);
+        cd.transform.parent = layoutAnchor;
+        cd.transform.localPosition = new Vector3(
+            layout.multiplier.x * layout.discardPile.x,
+            layout.multiplier.y * layout.discardPile.y,
+            -layout.discardPile.layerID + 0.5f
+        );
+        cd.faceUp = true;
+        cd.SetSortingLayerName(layout.discardPile.layerName);
+        cd.SetSortOrder(-100 + discardPile.Count);
+    }
+
+    void MoveToTarget(CardProspector cd)
+    {
+        if (target != null) MoveToDiscard(target);
+        target = cd;
+        cd.state = eCardState.target;
+        cd.transform.parent = layoutAnchor;
+        cd.transform.localPosition = new Vector3(
+            layout.multiplier.x * layout.discardPile.x,
+            layout.multiplier.y * layout.discardPile.y,
+            -layout.discardPile.layerID
+        );
+        cd.faceUp = true;
+        cd.SetSortingLayerName(layout.discardPile.layerName);
+        cd.SetSortOrder(0);
+    }
+
+    void UpdateDrawPile()
+    {
+        CardProspector cd;
+        for (int i = 0; i < drawPile.Count; i++)
+        {
+            cd = drawPile[i];
+            cd.transform.parent = layoutAnchor;
+
+            Vector2 dpStagger = layout.drawPile.stagger;
+            cd.transform.localPosition = new Vector3(
+                layout.multiplier.x * (layout.drawPile.x + i * dpStagger.x),
+                layout.multiplier.y * (layout.drawPile.y + i * dpStagger.y),
+                -layout.drawPile.layerID + 0.1f * i
+            );
+            cd.faceUp = false;
+            cd.state = eCardState.drawpile;
+            cd.SetSortingLayerName(layout.drawPile.layerName);
+            cd.SetSortOrder(-10 * i);
+        }
+    }
+
+    public void CardClicked(CardProspector cd)
+    {
+        switch (cd.state)
+        {
+            case eCardState.target:
+                break;
+            case eCardState.drawpile:
+                MoveToDiscard(target);
+                MoveToTarget(Draw());
+                UpdateDrawPile();
+                ScoreManager.EVENT(eScoreEvent.draw);
+                FloatingScoreHandler(eScoreEvent.draw);
+                break;
+            case eCardState.tableau:
+                bool validMatch = true;
+                if (!cd.faceUp)
+                {
+                    validMatch = false;
+                }
+                if (!AdjacentRank(cd, target))
+                {
+                    validMatch = false;
+                }
+                if (!validMatch) return;
+
+                tableau.Remove(cd);
+                MoveToTarget(cd);
+                SetTableauFaces();
+                ScoreManager.EVENT(eScoreEvent.mine);
+                FloatingScoreHandler(eScoreEvent.mine);
+                break;
+        }
+        CheckForGameOver();
+    }
+
+    void CheckForGameOver()
+    {
+        if (tableau.Count == 0)
+        {
+            GameOver(true);
+            return;
+        }
+        if (drawPile.Count > 0) return;
+        foreach (CardProspector cd in tableau)
+        {
+            if (AdjacentRank(cd, target))
+            {
+                return;
+            }
+        }
+        GameOver(false);
+    }
+
+    void GameOver(bool won)
+    {
+        int score = ScoreManager.SCORE;
+        if (fsRun != null) score += fsRun.score;
+        if (won)
+        {
+            gameOverText.text = "Round Over";
+            roundResultText.text = "You won this round! \nRound Score: " + score;
+            ShowResultUI(true);
+            ScoreManager.EVENT(eScoreEvent.gameWin);
+            FloatingScoreHandler(eScoreEvent.gameWin);
+        }
+        else
+        {
+            gameOverText.text = "Game Over";
+            if (ScoreManager.HIGH_SCORE <= score)
+            {
+                string str = "You got the high score! \nHigh score: " + score;
+                roundResultText.text = str;
+            }
+            else
+            {
+                roundResultText.text = "Your final score was: " + score;
+            }
+            ShowResultUI(true);
+            ScoreManager.EVENT(eScoreEvent.gameLoss);
+            FloatingScoreHandler(eScoreEvent.gameLoss);
+        }
+        Invoke("ReloadLevel", reloadDelay);
+    }
+
+    void ReloadLevel()
+    {
+        SceneManager.LoadScene("__Prospector_Scene_0");
+    }
+
+    public bool AdjacentRank(CardProspector c0, CardProspector c1)
+    {
+        if (!c0.faceUp || !c1.faceUp) return (false);
+        if (Mathf.Abs(c0.rank - c1.rank) == 1) return (true);
+        if (c0.rank == 1 && c1.rank == 13) return (true);
+        if (c0.rank == 13 && c1.rank == 1) return (true);
+        return (false);
+    }
+
+    void FloatingScoreHandler(eScoreEvent evt)
+    {
+        List<Vector2> fsPts;
+        switch (evt)
+        {
+            case eScoreEvent.draw:
+            case eScoreEvent.gameWin:
+            case eScoreEvent.gameLoss:
+                if (fsRun != null)
+                {
+                    fsPts = new List<Vector2>();
+                    fsPts.Add(fsPosRun);
+                    fsPts.Add(fsPosMid2);
+                    fsPts.Add(fsPosEnd);
+                    fsRun.reportFinishTo = Scoreboard.S.gameObject;
+                    fsRun.Init(fsPts, 0, 1);
+                    fsRun.fontSizes = new List<float>(new float[] { 28, 36, 4 });
+                    fsRun = null;
+                }
+                break;
+            case eScoreEvent.mine:
+                FloatingScore fs;
+                Vector2 p0 = Input.mousePosition;
+                p0.x /= Screen.width;
+                p0.y /= Screen.height;
+                fsPts = new List<Vector2>();
+                fsPts.Add(p0);
+                fsPts.Add(fsPosMid);
+                fsPts.Add(fsPosRun);
+                fs = Scoreboard.S.CreateFloatingScore(ScoreManager.CHAIN, fsPts);
+                fs.fontSizes = new List<float>(new float[] { 4, 50, 28 });
+                if (fsRun == null)
+                {
+                    fsRun = fs;
+                    fsRun.reportFinishTo = null;
+                }
+                else
+                {
+                    fs.reportFinishTo = fsRun.gameObject;
+                }
+                break;
+        }
+    }
 }

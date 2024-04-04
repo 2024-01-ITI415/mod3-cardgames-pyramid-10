@@ -2,116 +2,289 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(JsonParseDeck))]
 public class Deck : MonoBehaviour
 {
-    [Header("Inscribed")]
-    public CardSpritesSO cardSprites;
+    [Header("Set in Inspector")]
+    public bool startFaceUp = false;
+    public Sprite suitClub;
+    public Sprite suitDiamond;
+    public Sprite suitHeart;
+    public Sprite suitSpade;
+    public Sprite[] faceSprites;
+    public Sprite[] rankSprites;
+    public Sprite cardBack;
+    public Sprite cardBackGold;
+    public Sprite cardFront;
+    public Sprite cardFrontGold;
     public GameObject prefabCard;
     public GameObject prefabSprite;
-    public bool startFaceUp = true;
 
-    [Header("Dynamic")]
-    public Transform deckAnchor;
+    [Header("Set Dynamically")]
+    public PT_XMLReader xmlr;   
+    public List<string> cardNames;
     public List<Card> cards;
+    public List<Decorator> decorators;
+    public List<CardDefinition> cardDefs;
+    public Transform deckAnchor;
+    public Dictionary<string, Sprite> dictSuits;
 
-    private JsonParseDeck jsonDeck;
-
-    static public GameObject SPRITE_PREFAB { get; private set; }
-    /*
-    void Start()
+    
+    public void InitDeck(string deckXMLText)
     {
-        InitDeck();
-        Shuffle(ref cards);
-    }
-    */
-    /// <summary>
-    /// The Prospector class will call InitDeck to set up the deck and build
-    /// all 52 card GameObjects from the jsonDeck and cardSprites information.
-    /// </summary>
-    public void InitDeck()
-    {
-        // Create a static reference to spritePrefab for the Card class to use
-        SPRITE_PREFAB = prefabSprite;
-        // Call Init method on the CardSpriteSO instance assigned to cardSprites
-        cardSprites.Init();
-
-        // Get a reference to the JsonParseDeck component
-        jsonDeck = GetComponent<JsonParseDeck>();                            // b
-
-        // Create an anchor for all the Card GameObjects in the Hierarchy
         if (GameObject.Find("_Deck") == null)
-        {                          // c
+        {
             GameObject anchorGO = new GameObject("_Deck");
             deckAnchor = anchorGO.transform;
         }
-
+        
+        dictSuits = new Dictionary<string, Sprite>() {
+            {"C", suitClub},
+            {"D", suitDiamond},
+            {"H", suitHeart},
+            {"S", suitSpade}
+        };
+        
+        ReadDeck(deckXMLText);
         MakeCards();
     }
 
-    /// <summary>
-    /// Create a GameObject for each card in the deck.
-    /// </summary>
-    void MakeCards()
+    
+    public void ReadDeck(string deckXMLText)
     {
-        cards = new List<Card>();
-        Card c;
+        xmlr = new PT_XMLReader();
+        xmlr.Parse(deckXMLText);   
+        string s = "xml[0] decorator[0] ";
+        s += "type=" + xmlr.xml["xml"][0]["decorator"][0].att("type");
+        s += " x=" + xmlr.xml["xml"][0]["decorator"][0].att("x");
+        s += " y=" + xmlr.xml["xml"][0]["decorator"][0].att("y");
+        s += " scale=" + xmlr.xml["xml"][0]["decorator"][0].att("scale");
+        
 
-        // Generate 13 cards for each suit
-        string suits = "CDHS";
-        for (int i = 0; i < 4; i++)
+        
+        decorators = new List<Decorator>();
+        PT_XMLHashList xDecos = xmlr.xml["xml"][0]["decorator"];  
+        Decorator deco; 
+        
+        for (int i = 0; i < xDecos.Count; i++)
         {
-            for (int j = 1; j <= 13; j++)
-            {                                // d
-                c = MakeCard(suits[i], j);                                 // e
-                cards.Add(c);
+            deco = new Decorator();
+            
+            deco.type = xDecos[i].att("type");
+            deco.flip = (xDecos[i].att("flip") == "1");   
+            deco.scale = float.Parse(xDecos[i].att("scale"));
+            deco.loc.x = float.Parse(xDecos[i].att("x"));
+            deco.loc.y = float.Parse(xDecos[i].att("y"));
+            deco.loc.z = float.Parse(xDecos[i].att("z"));
+            decorators.Add(deco);
+        }
 
-                // This aligns the cards in nice rows for testing
-                c.transform.position =
-                    new Vector3((j - 7) * 3, (i - 1.5f) * 4, 0);
+        
+        cardDefs = new List<CardDefinition>();
+        PT_XMLHashList xCardDefs = xmlr.xml["xml"][0]["card"];  
+        for (int i = 0; i < xCardDefs.Count; i++)
+        {
+            CardDefinition cDef = new CardDefinition();
+            cDef.rank = int.Parse(xCardDefs[i].att("rank"));
+            PT_XMLHashList xPips = xCardDefs[i]["pip"];  
+            if (xPips != null)
+            {   
+                for (int j = 0; j < xPips.Count; j++)
+                {
+                    deco = new Decorator();
+                    deco.type = "pip";
+                    deco.flip = (xPips[j].att("flip") == "1");
+                    deco.loc.x = float.Parse(xPips[j].att("x"));
+                    deco.loc.y = float.Parse(xPips[j].att("y"));
+                    deco.loc.z = float.Parse(xPips[j].att("z"));
+                    if (xPips[j].HasAtt("scale"))
+                    {   
+                        deco.scale = float.Parse(xPips[j].att("scale"));
+                    }
+                    cDef.pips.Add(deco);
+                }
             }
+            if (xCardDefs[i].HasAtt("face"))
+            {  
+                cDef.face = xCardDefs[i].att("face");
+            }
+            cardDefs.Add(cDef);
         }
     }
 
-    /// <summary>
-    /// Creates a card GameObject based on suit and rank.
-    /// Note that this method assumes it will be passed a valid suit and rank.
-    /// </summary>
-    /// <param name="suit">The suit of the card (e.g., ’C’)</param>
-    /// <param name="rank">The rank from 1 to 13</param>
-    /// <returns></returns>
-    Card MakeCard(char suit, int rank)
+    public CardDefinition GetCardDefinitionByRank(int rnk)
     {
-        GameObject go = Instantiate<GameObject>(prefabCard, deckAnchor);   // f
+        foreach (CardDefinition cd in cardDefs)
+        {
+            if (cd.rank == rnk)
+            {
+                return (cd);
+            }
+        }
+        return (null);
+    }
 
-        Card card = go.GetComponent<Card>();
+    public void MakeCards()
+    {
+        cardNames = new List<string>();
+        string[] letters = new string[] { "C", "D", "H", "S" };
+        foreach (string s in letters)
+        {
+            for (int i = 0; i < 13; i++)
+            {
+                cardNames.Add(s + (i + 1));  
+            }
+        }
 
-        card.Init(suit, rank, startFaceUp);                                // g
+        cards = new List<Card>();
+        for (int i = 0; i < cardNames.Count; i++)
+        {
+            cards.Add(MakeCard(i));
+        }
+    }
+
+    private Card MakeCard(int cNum)
+    {
+        GameObject cgo = Instantiate(prefabCard) as GameObject;
+        cgo.transform.parent = deckAnchor;  
+        Card card = cgo.GetComponent<Card>();  
+       
+        cgo.transform.localPosition = new Vector3((cNum % 13) * 3, cNum / 13 * 4, 0);
+
+        
+        card.name = cardNames[cNum];
+        card.suit = card.name[0].ToString();
+        card.rank = int.Parse(card.name.Substring(1));
+        if (card.suit == "D" || card.suit == "H")
+        {
+            card.colS = "Red";
+            card.color = Color.red;
+        }
+        card.def = GetCardDefinitionByRank(card.rank);
+        AddDecorators(card);
+        AddPips(card);
+        AddFace(card);
+        AddBack(card);
+
         return card;
     }
 
-    /// <summary>
-    /// Shuffle a List(Card) and return the result to the original list.      // b
-    /// </summary>
-    /// <param name="refCards">As a ref, this alters on the original list</param>
-    static public void Shuffle(ref List<Card> refCards)
-    {                     // a
-                          // Create a temporary List to hold the new shuffle order
-        List<Card> tCards = new List<Card>();
+    private Sprite _tSp = null;
+    private GameObject _tGO = null;
+    private SpriteRenderer _tSR = null;
 
-        int ndx; // This will hold the index of the card to be moved
-                 // Repeat as long as there are cards in the original List
-        while (refCards.Count > 0)
+    private void AddDecorators(Card card)
+    {
+        foreach (Decorator deco in decorators)
         {
-            // Pick the index of a random card
-            ndx = Random.Range(0, refCards.Count);
-            // Add that card to the temporary List
-            tCards.Add(refCards[ndx]);
-            // And remove that card from the original List
-            refCards.RemoveAt(ndx);
+            if (deco.type == "suit")
+            {
+                _tGO = Instantiate(prefabSprite) as GameObject;
+                _tSR = _tGO.GetComponent<SpriteRenderer>();
+                _tSR.sprite = dictSuits[card.suit];
+            }
+            else
+            {
+                _tGO = Instantiate(prefabSprite) as GameObject;
+                _tSR = _tGO.GetComponent<SpriteRenderer>();
+                _tSp = rankSprites[card.rank];
+                _tSR.sprite = _tSp;
+                _tSR.color = card.color;
+            }
+            
+            _tSR.sortingOrder = 1;
+            
+            _tGO.transform.SetParent(card.transform);
+            _tGO.transform.localPosition = deco.loc;
+            if (deco.flip)
+            {
+                _tGO.transform.rotation = Quaternion.Euler(0, 0, 180);
+            }
+            if (deco.scale != 1)
+            {
+                _tGO.transform.localScale = Vector3.one * deco.scale;
+            }
+            _tGO.name = deco.type;
+            card.decoGOs.Add(_tGO);
         }
-        // Replace the original List with the temporary List
-        refCards = tCards;                                                    // c
     }
 
+    private void AddPips(Card card)
+    {
+        foreach (Decorator pip in card.def.pips)
+        {
+            _tGO = Instantiate(prefabSprite) as GameObject;
+            _tGO.transform.SetParent(card.transform);
+            _tGO.transform.localPosition = pip.loc;
+            if (pip.flip)
+            {
+                _tGO.transform.rotation = Quaternion.Euler(0, 0, 180);
+            }
+            if (pip.scale != 1)
+            {
+                _tGO.transform.localScale = Vector3.one * pip.scale;
+            }
+            _tGO.name = "pip";
+            _tSR = _tGO.GetComponent<SpriteRenderer>();
+            _tSR.sprite = dictSuits[card.suit];
+            _tSR.sortingOrder = 1;
+            card.pipGOs.Add(_tGO);
+        }
+    }
+
+    private void AddFace(Card card)
+    {
+        if (card.def.face == "")
+        {
+            return;
+        }
+        _tGO = Instantiate(prefabSprite) as GameObject;
+        _tSR = _tGO.GetComponent<SpriteRenderer>();
+        _tSp = GetFace(card.def.face + card.suit);
+        _tSR.sprite = _tSp;
+        _tSR.sortingOrder = 1;
+        _tGO.transform.SetParent(card.transform);
+        _tGO.transform.localPosition = Vector3.zero;
+        _tGO.name = "face";
+    }
+
+    private Sprite GetFace(string faceS)
+    {
+        foreach (Sprite _tSP in faceSprites)
+        {
+            if (_tSP.name == faceS)
+            {
+                return (_tSP);
+            }
+        }
+        return (null);
+    }
+
+    private void AddBack(Card card)
+    {
+        _tGO = Instantiate(prefabSprite) as GameObject;
+        _tSR = _tGO.GetComponent<SpriteRenderer>();
+        _tSR.sprite = cardBack;   
+        _tGO.transform.SetParent(card.transform);
+        _tGO.transform.localPosition = Vector3.zero;
+        _tSR.sortingOrder = 2; 
+        _tGO.name = "back";
+        card.back = _tGO;     
+        
+        card.faceUp = startFaceUp;
+    }
+
+    public static void Shuffle(ref List<Card> oCards)
+    {  
+        
+        List<Card> tCards = new List<Card>();  
+        int ndx;
+        tCards = new List<Card>();   
+        while (oCards.Count > 0)
+        {
+            ndx = Random.Range(0, oCards.Count);
+            tCards.Add(oCards[ndx]);
+            oCards.RemoveAt(ndx);
+        }
+        oCards = tCards;
+    }
 }
