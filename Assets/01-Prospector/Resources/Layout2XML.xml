@@ -25,7 +25,7 @@
 	<slot id="3" x="-2" y="1" faceup="1" layer="2" hiddenby="6,7" />
 	<slot id="4" x="0" y="1" faceup="1" layer="2" hiddenby="7,8" />
 	<slot id="5" x="2" y="1" faceup="1" layer="2" hiddenby="8,9" />
-
+	
 	<!-- Layer3, the next layer. -->
 
 	<slot id="6" x="-3"  y="0" faceup="1" layer="3" hiddenby="10,11" />
